@@ -1,75 +1,67 @@
 <?php
-session_start();
-include 'connection.php';
+// api/login.php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+include 'connection.php'; 
 
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
+// 1. Read JSON Input
+$data = json_decode(file_get_contents("php://input"));
 
-    // FUNCTIONS TO CHECK EACH TABLE
-    function checkLogin($conn, $table, $role, $email, $password) {
+if (!isset($data->email) || !isset($data->password)) {
+    echo json_encode(["status" => "error", "message" => "Missing fields"]);
+    exit();
+}
 
+$email = $data->email;
+$password = $data->password;
+
+// Helper function to check tables
+function checkUser($conn, $table, $role, $email, $password) {
     $sql = "SELECT id, name, email, password FROM $table WHERE email = ?";
     $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        die("SQL Error: " . $conn->error);
-    }
-
     $stmt->bind_param("s", $email);
     $stmt->execute();
-
-    // Store result
     $result = $stmt->get_result();
 
-    // If no matching email, return false
-    if ($result->num_rows === 0) {
-        return false;
-    }
-
-    // Fetch row as array
-    $row = $result->fetch_assoc();
-
-    $id = $row['id'];
-    $name = $row['name'];
-    $email_db = $row['email'];
-    $hashed_password = $row['password'];
-
-    // Now verify password
-    if (password_verify($password, $hashed_password)) {
-
-        // store session
-        $_SESSION['user_id'] = $id;
-        $_SESSION['name'] = $name;
-        $_SESSION['email'] = $email_db;
-        $_SESSION['role'] = $role;
-
-        // Redirect based on role
-        if ($role === "admin") {
-            header("Location: admin_dashboard.php");
-        } elseif ($role === "provider") {
-            header("Location: provider_dashboard.php");
-        } else {
-            header("Location: customer_dashboard.php");
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        // Verify Hash
+        if (password_verify($password, $row['password'])) {
+            return [
+                "id" => $row['id'],
+                "name" => $row['name'],
+                "email" => $row['email'],
+                "role" => $role
+            ];
         }
-        exit;
     }
-
     return false;
 }
 
-
-    // Try admin table
-    if (checkLogin($conn, "tbladmin", "admin", $email, $password)) exit;
-
-    // Try provider table
-    if (checkLogin($conn, "tblproviders", "provider", $email, $password)) exit;
-
-    // Try customer table
-    if (checkLogin($conn, "tblcustomers", "customer", $email, $password)) exit;
-
-    // If no match:
-    echo "Invalid email or password!";
+// Check Admin
+$user = checkUser($conn, "tbladmins", "admin", $email, $password);
+if ($user) {
+    echo json_encode(["status" => "success", "user" => $user]);
+    exit();
 }
+
+// Check Provider
+$user = checkUser($conn, "tblproviders", "provider", $email, $password);
+if ($user) {
+    echo json_encode(["status" => "success", "user" => $user]);
+    exit();
+}
+
+// Check Customer
+$user = checkUser($conn, "tblcustomers", "customer", $email, $password);
+if ($user) {
+    echo json_encode(["status" => "success", "user" => $user]);
+    exit();
+}
+
+// If no match found
+echo json_encode(["status" => "error", "message" => "Invalid Email or Password"]);
 ?>
