@@ -7,6 +7,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 
 include 'connection.php';
 
+
 $data = json_decode(file_get_contents("php://input"));
 
 // Validate Input presence
