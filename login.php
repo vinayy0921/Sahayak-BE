@@ -20,7 +20,7 @@ $password = $data->password;
 
 // Helper function to check tables
 function checkUser($conn, $table, $role, $email, $password) {
-    $sql = "SELECT id, name, email, password FROM $table WHERE email = ?";
+    $sql = "SELECT id, name, email, password, profile_img FROM $table WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -34,6 +34,7 @@ function checkUser($conn, $table, $role, $email, $password) {
                 "id" => $row['id'],
                 "name" => $row['name'],
                 "email" => $row['email'],
+                "profile_img" => isset($row['profile_img']) ? $row['profile_img'] : null,
                 "role" => $role
             ];
         }

@@ -2,7 +2,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
-include '../connection.php';
+include '../connection.php'; // Adjust path if needed
 
 $customer_id = isset($_GET['customer_id']) ? $_GET['customer_id'] : '';
 
@@ -11,7 +11,7 @@ if(empty($customer_id)) {
     exit;
 }
 
-// Join Bookings + Service Details + Provider Details
+// SQL: Added financial columns so the frontend can display the bill
 $sql = "
     SELECT 
         b.id as booking_id,
@@ -19,7 +19,9 @@ $sql = "
         b.time_slot,
         b.status,
         b.address,
-        b.created_at,
+        b.visit_charge,       -- NEW
+        b.final_amount,       -- NEW
+        b.bill_description,   -- NEW
         ps.service_name,
         ps.price_per_hour,
         p.name as provider_name,
@@ -39,7 +41,11 @@ $result = $stmt->get_result();
 
 $bookings = [];
 while ($row = $result->fetch_assoc()) {
-    // Fix image path logic here if needed, or handle in frontend
+    // Fix image path if needed
+    if ($row['profile_img'] && !str_starts_with($row['profile_img'], 'http')) {
+        // Just return relative path, frontend helper handles domain
+        $row['profile_img'] = $row['profile_img']; 
+    }
     $bookings[] = $row;
 }
 
