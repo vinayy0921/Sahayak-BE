@@ -24,14 +24,15 @@ $sql = "SELECT
             ps.description,
             p.name as provider_name, 
             p.profile_img, 
+            p.profession,
             p.city, 
             p.is_verified
         FROM tblprovider_services ps
         JOIN tblproviders p ON ps.provider_id = p.id
-        WHERE ps.service_name LIKE ? OR p.name LIKE ? OR p.city LIKE ?";
+        WHERE ps.service_name LIKE ? OR p.name LIKE ? OR p.city LIKE ? OR p.profession LIKE ?";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
+$stmt->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm);
 $stmt->execute();
 $result = $stmt->get_result();
 
