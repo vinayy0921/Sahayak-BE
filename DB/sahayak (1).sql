@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 01, 2025 at 08:39 AM
+-- Generation Time: Dec 10, 2025 at 10:38 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,7 +32,8 @@ CREATE TABLE `tbladmins` (
   `name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `profile_img` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -46,12 +47,34 @@ CREATE TABLE `tblbookings` (
   `customer_id` int(11) NOT NULL,
   `provider_id` int(11) NOT NULL,
   `service_id` int(11) NOT NULL,
+  `visit_charge` decimal(10,2) DEFAULT 99.00,
+  `final_amount` decimal(10,2) DEFAULT 0.00,
+  `bill_description` text DEFAULT NULL,
+  `rejection_reason` text DEFAULT NULL,
   `booking_date` date NOT NULL,
   `time_slot` varchar(20) NOT NULL,
-  `status` enum('pending','confirmed','completed','cancelled') DEFAULT 'pending',
+  `status` enum('pending','confirmed','started','payment_pending','completed','cancelled') DEFAULT 'pending',
   `address` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `completed_at` datetime DEFAULT NULL,
+  `cancelled_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tblbookings`
+--
+
+INSERT INTO `tblbookings` (`id`, `customer_id`, `provider_id`, `service_id`, `visit_charge`, `final_amount`, `bill_description`, `rejection_reason`, `booking_date`, `time_slot`, `status`, `address`, `created_at`, `completed_at`, `cancelled_at`) VALUES
+(1, 4, 2, 3, 99.00, 0.00, NULL, NULL, '2025-12-03', '06:00 PM', 'cancelled', 'surat', '2025-12-03 10:27:33', NULL, NULL),
+(2, 4, 1, 1, 99.00, 0.00, NULL, NULL, '2025-12-04', '04:00 PM', 'cancelled', 'surat', '2025-12-03 10:55:01', NULL, NULL),
+(3, 4, 2, 3, 99.00, 0.00, NULL, NULL, '2025-12-10', '09:00 AM', 'cancelled', 'jahangirpura', '2025-12-08 09:36:07', NULL, '2025-12-08 17:43:09'),
+(4, 4, 4, 13, 99.00, 300.00, 'hii', NULL, '2026-01-02', '11:00 AM', 'completed', 'nfhnd', '2025-12-08 10:26:35', NULL, NULL),
+(5, 4, 4, 13, 99.00, 0.00, NULL, NULL, '2025-12-11', '09:00 AM', 'cancelled', '97 jjhfg', '2025-12-08 10:42:10', NULL, NULL),
+(6, 4, 4, 13, 99.00, 99.00, 'hi [Customer Rejected Work]', 'over-charge', '2025-12-11', '04:00 PM', 'completed', 'jfgj', '2025-12-08 10:42:49', NULL, NULL),
+(7, 4, 4, 13, 99.00, 99.00, 'hd [Customer Rejected]', 'no', '2025-12-12', '09:00 AM', 'completed', 'fs', '2025-12-08 11:03:21', '2025-12-08 16:34:06', NULL),
+(8, 4, 2, 3, 99.00, 0.00, NULL, NULL, '2025-12-09', '09:00 AM - 11:00 AM', 'pending', 'J-808, suman vandhan near sai pujan, jahangirpura', '2025-12-08 14:16:41', NULL, NULL),
+(9, 4, 6, 15, 99.00, 0.00, NULL, NULL, '2025-12-11', '09:00 AM - 11:00 AM', 'completed', 'J-808, suman vandhan near sai pujan, jahangirpura', '2025-12-09 10:54:14', NULL, NULL),
+(10, 4, 4, 13, 99.00, 200.00, 'dfg', NULL, '2025-12-11', '09:00 AM - 11:00 AM', 'payment_pending', 'J-808, suman vandhan near sai pujan, jahangirpura', '2025-12-10 09:30:43', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -62,18 +85,21 @@ CREATE TABLE `tblbookings` (
 CREATE TABLE `tblcategories` (
   `id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
-  `image_url` varchar(255) DEFAULT NULL
+  `slug` varchar(100) NOT NULL,
+  `image` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tblcategories`
 --
 
-INSERT INTO `tblcategories` (`id`, `name`, `image_url`) VALUES
-(1, 'Plumber', 'plumber.png'),
-(2, 'Electrician', 'electrician.png'),
-(3, 'Cleaning', 'cleaning.png'),
-(4, 'Tutor', 'tutor.png');
+INSERT INTO `tblcategories` (`id`, `name`, `slug`, `image`) VALUES
+(1, 'Plumber', 'plumber', 'plumber.png'),
+(2, 'Electrician', 'electrician', 'electrician.png'),
+(3, 'Cleaning', 'cleaning', 'cleaning.png'),
+(4, 'Tutor', 'tutor', 'tutor.png'),
+(5, 'Carpenter', 'carpenter', 'carpenter.png'),
+(6, 'AC Repair', 'ac-repair', 'ac-repair.png');
 
 -- --------------------------------------------------------
 
@@ -100,7 +126,31 @@ CREATE TABLE `tblcustomers` (
 INSERT INTO `tblcustomers` (`id`, `name`, `email`, `password`, `phone`, `address`, `locality`, `profile_img`, `created_at`) VALUES
 (1, 'Ravi Patel', 'ravi@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9876500001', 'B-201, Rajhans Point, Adajan, Surat', NULL, 'default_user.png', '2025-12-01 07:32:31'),
 (2, 'Sneha Desai', 'sneha@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9876500002', 'A-405, Vesu VIP Road, Surat', NULL, 'default_user.png', '2025-12-01 07:32:31'),
-(3, 'Amit Shah', 'amit@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9876500003', 'C-12, Pal Gam, Surat', NULL, 'default_user.png', '2025-12-01 07:32:31');
+(3, 'Amit Shah', 'amit@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9876500003', 'C-12, Pal Gam, Surat', NULL, 'default_user.png', '2025-12-01 07:32:31'),
+(4, 'vinay', 'vinay@a.com', '$2y$10$iwhz0VQVMUWvQONG0pGrtOi56833mDFjV5GCZ2.JaBaqumnYB32Zq', '7985337963', 'j-808 suman vandhan', 'Surat', 'uploads/user_4_1765197220.jpg', '2025-12-01 10:10:06'),
+(6, 'shivam', 'shiv@m.com', '$2y$10$EtOzDy7YvGN8D8Ecj4fEU.5ZvDXruMBuOSfIyxIAnIj6WPCObIT46', '7878787878', '10, majura, Adajan, Surat', 'Adajan', 'default_user.png', '2025-12-02 08:43:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tblcustomer_addresses`
+--
+
+CREATE TABLE `tblcustomer_addresses` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `label` varchar(50) DEFAULT NULL,
+  `address` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tblcustomer_addresses`
+--
+
+INSERT INTO `tblcustomer_addresses` (`id`, `customer_id`, `label`, `address`, `created_at`) VALUES
+(1, 4, 'Home', 'J-808, suman vandhan near sai pujan, jahangirpura', '2025-12-08 13:42:34'),
+(3, 4, 'office', 'subash garden', '2025-12-08 14:02:12');
 
 -- --------------------------------------------------------
 
@@ -114,6 +164,7 @@ CREATE TABLE `tblproviders` (
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `phone` varchar(15) NOT NULL,
+  `address` text DEFAULT NULL,
   `city` varchar(50) NOT NULL,
   `bio` text DEFAULT NULL,
   `profession` varchar(255) DEFAULT NULL,
@@ -127,10 +178,13 @@ CREATE TABLE `tblproviders` (
 -- Dumping data for table `tblproviders`
 --
 
-INSERT INTO `tblproviders` (`id`, `name`, `email`, `password`, `phone`, `city`, `bio`, `profession`, `experience_years`, `profile_img`, `is_verified`, `created_at`) VALUES
-(1, 'Raju Mistry', 'rajesh@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898011111', 'Surat', 'Expert Plumber with 10 years of experience in pipe fitting and leakage.', NULL, 10, 'default_provider.png', 1, '2025-12-01 07:34:17'),
-(2, 'Sunita Cleaning', 'sunita@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898022222', 'Surat', 'Professional home deep cleaning and sofa cleaning services.', NULL, 5, 'default_provider.png', 1, '2025-12-01 07:34:17'),
-(3, 'Vijay Electricals', 'vijay@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898033333', 'Surat', 'AC Repair and House Wiring specialist. Available 24/7.', NULL, 8, 'default_provider.png', 0, '2025-12-01 07:34:17');
+INSERT INTO `tblproviders` (`id`, `name`, `email`, `password`, `phone`, `address`, `city`, `bio`, `profession`, `experience_years`, `profile_img`, `is_verified`, `created_at`) VALUES
+(1, 'Raju Mistry', 'rajesh@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898011111', NULL, 'Surat', 'Expert Plumber with 10 years of experience in pipe fitting and leakage.', NULL, 10, 'default_provider.png', 1, '2025-12-01 07:34:17'),
+(2, 'Sunita Cleaning', 'sunita@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898022222', NULL, 'Surat', 'Professional home deep cleaning and sofa cleaning services.', NULL, 5, '../images/cleaner.png', 1, '2025-12-01 07:34:17'),
+(3, 'Vijay Electricals', 'vijay@gmail.com', '$2y$10$Tw.v.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', '9898033333', NULL, 'Surat', 'AC Repair and House Wiring specialist. Available 24/7.', NULL, 8, 'default_provider.png', 0, '2025-12-01 07:34:17'),
+(4, 'ranjan kumar', 'ranjan@abc.com', '$2y$10$uVYvPS1a/ZZkB/Z26ZushuSLzVCsfzCjLBr0650PXjs2PxbfPKsm2', '9876543210', 'A-808 jahangirpura', 'Surat', 'expert electrician', 'Electrician', 2, 'default_provider.png', 0, '2025-12-05 10:12:08'),
+(5, 'nilesh gond', 'nilesh@gond.com', '$2y$10$CYrXrHpM56NY8zuqRlvRQ.EM7HVJ1ODm9h33aZDuaGKZO4xicW9oG', '1235987634', 'adajan', 'Surat', 'Expert AC repairing.', 'AC Repair', 2, 'default_provider.png', 0, '2025-12-09 09:56:55'),
+(6, 'raman', 'raman@a.c', '$2y$10$yicBnolXs8NABzeN2NvciuDYSlTg61ibwKxEKyqaM7kPgtR8QmT0y', '78984560123', 'adajan', 'Surat', 'Expert carpenter', 'Carpenter', 2, 'default_provider.png', 0, '2025-12-09 10:01:38');
 
 -- --------------------------------------------------------
 
@@ -156,7 +210,9 @@ INSERT INTO `tblprovider_services` (`id`, `provider_id`, `category_id`, `service
 (2, 1, 1, 'Water Tank Installation', 'Full installation of 500L/1000L tanks.', 1500.00),
 (3, 2, 3, 'Full Home Deep Cleaning', 'Includes floor, kitchen, and washroom cleaning.', 999.00),
 (4, 3, 2, 'Fan & Light Installation', 'Installing new ceiling fans and tubelights.', 150.00),
-(5, 3, 2, 'AC Gas Filling', 'Split AC gas refilling and servicing.', 2500.00);
+(5, 3, 2, 'AC Gas Filling', 'Split AC gas refilling and servicing.', 2500.00),
+(13, 4, 1, 'nnxnxb', 'fghhf', 754.00),
+(15, 6, 5, 'furniture', 'all', 200.00);
 
 -- --------------------------------------------------------
 
@@ -191,6 +247,13 @@ CREATE TABLE `tbltransactions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Dumping data for table `tbltransactions`
+--
+
+INSERT INTO `tbltransactions` (`id`, `booking_id`, `total_amount`, `admin_commission`, `provider_earnings`, `payment_status`, `transaction_date`) VALUES
+(1, 4, 300.00, 30.00, 270.00, 'paid', '2025-12-08 10:36:43');
+
+--
 -- Indexes for dumped tables
 --
 
@@ -222,6 +285,13 @@ ALTER TABLE `tblcategories`
 ALTER TABLE `tblcustomers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `tblcustomer_addresses`
+--
+ALTER TABLE `tblcustomer_addresses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`);
 
 --
 -- Indexes for table `tblproviders`
@@ -268,31 +338,37 @@ ALTER TABLE `tbladmins`
 -- AUTO_INCREMENT for table `tblbookings`
 --
 ALTER TABLE `tblbookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `tblcategories`
 --
 ALTER TABLE `tblcategories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `tblcustomers`
 --
 ALTER TABLE `tblcustomers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `tblcustomer_addresses`
+--
+ALTER TABLE `tblcustomer_addresses`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tblproviders`
 --
 ALTER TABLE `tblproviders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `tblprovider_services`
 --
 ALTER TABLE `tblprovider_services`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `tblreviews`
@@ -304,7 +380,7 @@ ALTER TABLE `tblreviews`
 -- AUTO_INCREMENT for table `tbltransactions`
 --
 ALTER TABLE `tbltransactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -317,6 +393,12 @@ ALTER TABLE `tblbookings`
   ADD CONSTRAINT `tblbookings_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `tblcustomers` (`id`),
   ADD CONSTRAINT `tblbookings_ibfk_2` FOREIGN KEY (`provider_id`) REFERENCES `tblproviders` (`id`),
   ADD CONSTRAINT `tblbookings_ibfk_3` FOREIGN KEY (`service_id`) REFERENCES `tblprovider_services` (`id`);
+
+--
+-- Constraints for table `tblcustomer_addresses`
+--
+ALTER TABLE `tblcustomer_addresses`
+  ADD CONSTRAINT `tblcustomer_addresses_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `tblcustomers` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `tblprovider_services`
